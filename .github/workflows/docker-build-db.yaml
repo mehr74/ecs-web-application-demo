@@ -1,4 +1,4 @@
-name: Docker build backend image
+name: Docker build db image
 
 on:
   push:
@@ -32,8 +32,8 @@ jobs:
     - name: Build, tag, and push docker image to Amazon ECR
       uses: docker/build-push-action@v5
       with:
-        context: ./src/backend
+        context: ./src/db
         push: ${{ github.event_name == 'push' && github.ref == 'refs/heads/main' }}
-        tags: 615677714887.dkr.ecr.eu-central-1.amazonaws.com/ecs-web-application-demo-backend-repo
+        tags: 615677714887.dkr.ecr.eu-central-1.amazonaws.com/ecs-web-application-demo-db-repo
         cache-from: type=gha
         cache-to: type=gha,mode=max
