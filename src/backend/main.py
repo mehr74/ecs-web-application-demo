@@ -4,7 +4,6 @@ import time
 from flask import Flask
 import asyncio
 
-
 # Use the function
 dbname = os.environ.get('DB_NAME')
 user = os.environ.get('DB_USER')
@@ -12,13 +11,10 @@ password = os.environ.get('DB_PASSWORD')
 host = os.environ.get('DB_HOST')
 port = os.environ.get('DB_PORT')
 
-db_connected = False
-conn = None
-cur = None
 
 app = Flask(__name__)
 
-async def connect_to_postgres(dbname, user, password, host, port):
+def connect_to_postgres(dbname, user, password, host, port):
   max_attempts = 3
   delay = 10
   print(f"Connecting to the database {dbname} on {host}:{port} as {user}")
@@ -26,21 +22,21 @@ async def connect_to_postgres(dbname, user, password, host, port):
     try:
       # Connect to the PostgreSQL server
       global cur, db_connected, conn
-      conn = await asyncio.sleep(delay, psycopg2.connect(
+      conn = psycopg2.connect(
           dbname=dbname,
           user=user,
           password=password,
           host=host,
           port=port
-      ))
+      )
       # Create a new cursor
       cur = conn.cursor()
-      db_connected = True
+      return conn, cur
 
     except (Exception, psycopg2.DatabaseError) as error:
       print(f"Attempt {attempt + 1} failed to connect to the database")
       print(error)
-      await asyncio.sleep(delay)
+      time.sleep(delay)
 
 
 def get_users(conn, cur):
@@ -60,11 +56,10 @@ def hello_world():
 
 @app.route('/users')
 def show_users():
-  if db_connected:
+  conn, cur = connect_to_postgres(dbname, user, password, host, port)
+  if conn:
     return get_users(conn, cur)
   return "Database not connected"
-
-# asyncio.run(connect_to_postgres(dbname, user, password, host, port))
 
 if __name__ == '__main__':
   app.run(port=os.environ.get('PORT', 5000), host='0.0.0.0')
