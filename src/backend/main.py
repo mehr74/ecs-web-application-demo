@@ -2,7 +2,7 @@ import os
 import psycopg2
 import time
 from flask import Flask
-import asyncio
+import logging
 
 # Use the function
 dbname = os.environ.get('DB_NAME')
@@ -13,11 +13,12 @@ port = os.environ.get('DB_PORT')
 
 
 app = Flask(__name__)
+logging.basicConfig(level=logging.DEBUG)
 
 def connect_to_postgres(dbname, user, password, host, port):
   max_attempts = 3
   delay = 10
-  print(f"Connecting to the database {dbname} on {host}:{port} as {user}")
+  app.logger.info(f"Connecting to the database {dbname} on {host}:{port} as {user}")
   for attempt in range(max_attempts):
     try:
       # Connect to the PostgreSQL server
@@ -34,8 +35,8 @@ def connect_to_postgres(dbname, user, password, host, port):
       return conn, cur
 
     except (Exception, psycopg2.DatabaseError) as error:
-      print(f"Attempt {attempt + 1} failed to connect to the database")
-      print(error)
+      app.logger.warning(f"Attempt {attempt + 1} failed to connect to the database")
+      app.logger.warning(error)
       time.sleep(delay)
 
 
@@ -48,7 +49,7 @@ def get_users(conn, cur):
       result = result + f"{row[0]} {row[1]} {row[2]}</br>"
     return result
   except (Exception, psycopg2.DatabaseError) as error:
-    print(error)
+    app.logger.error(error)
 
 @app.route('/')
 def hello_world():
